@@ -98,7 +98,7 @@ jobs:
       target_registry: ghcr.io
       platforms: "['linux/arm64', 'linux/amd64']"
     secrets:
-      source_registry_username:  ${{ secrets.REGISTRY_USER }}
+      source_registry_username:  ${{ vars.REGISTRY_USER }}
       source_registry_token: ${{ secrets.REGISTRY_PASSWORD }}
       target_registry_token: ${{ secrets.GITHUB_TOKEN }}
       target_registry_username: ${{ github.actor }}
