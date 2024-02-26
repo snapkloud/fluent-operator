@@ -14,23 +14,24 @@ on:
       - "pkg/filenotify/**"
 
 env:
-  VERSION: ${{ github.ref_name }}          # v2.2.2
 
-  DOCKER_REGISTRY: "docker.io"
-  DOCKER_REPO: "${{ vars.FD_IMG }}:${{ github.ref_name }}"                          # kubesphere/fluentd
-  ARM64_DOCKER_REPO: "${{ vars.FD_IMG }}:${{ github.ref_name }}-arm64"              # kubesphere/fluentd:v2.2.2-arm64
-  ARM64_BASE_DOCKER_REPO: "${{ vars.FD_IMG }}:${{ github.ref_name }}-arm64-base"    # kubesphere/fluentd:v2.2.2-arm64-base
+  FD_IMG: "sarathchandra24/fluentd:${{ github.ref_name }}"                          # kubesphere/fluentd:v2.2.2
+  FD_IMAGE_ARCH: "sarathchandra24/fluentd:${{ github.ref_name }}-arm64"              # kubesphere/fluentd:v2.2.2-arm64
+  FD_IMAGE_ARCH_BASE: "sarathchandra24/fluentd:${{ github.ref_name }}-arm64-base"    # kubesphere/fluentd:v2.2.2-arm64-base
   
 
-  GHCR_REPO: "${{ vars.FD_GHCR_IMG }}:${{ github.ref_name }}"                              # fluent/fluentd
-  ARM64_GHCR_REPO: "${{ vars.FD_GHCR_IMG }}:${{ github.ref_name }}-arm64"                  # fluent/fluentd:v2.2.2-arm64
-  ARM64_BASE_GHCR_REPO: "${{ vars.FD_GHCR_IMG }}:${{ github.ref_name }}-arm64-base"        # fluent/fluentd:v2.2.2-arm64-base
+  FD_IMAGE_GHCR: "${{ github.repository }}/fluentd:${{ github.ref_name }}"                              # fluent/fluent-operator/fluentd:v2.2.2
+  FD_IMAGE_ARCH_GHCR: "${{ github.repository }}/fluentd:${{ github.ref_name }}-arm64"                  # fluent/fluent-operator/fluentd:v2.2.2-arm64
+  FD_IMAGE_ARCH_BASE_GHCR: "${{ github.repository }}/fluentd:${{ github.ref_name }}-arm64-base"        # fluent/fluent-operator/fluentd:v2.2.2-arm64-base
 
 jobs:
   build-fluetd-amd64:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     name: Build Fluentd amd64 docker image
+    outputs:
+      FD_IMG: ${{ env.FD_IMG }}
+      FD_IMAGE_GHCR: ${{ env.FD_IMAGE_GHCR }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v4
@@ -44,18 +45,6 @@ jobs:
       
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
-      
-      - name: Chek if variables are defined
-        run: |
-          if [ -z "${{ vars.FD_IMG }}" ]; then
-            echo "FD_IMG is not defined"
-            exit 1
-          fi
-
-          if [ -z "${{ vars.FD_GHCR_IMG }}" ]; then
-            echo "FD_GHCR_IMG is not defined"
-            exit 1
-          fi
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -65,7 +54,7 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.REGISTRY_USER }}
+          username: ${{ vars.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       
       - name: Set up Docker Buildx
@@ -80,7 +69,7 @@ jobs:
           file: ./cmd/fluent-watcher/fluentd/Dockerfile.amd64
           push: true
           platforms: 'linux/amd64'
-          tags: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_REPO }}
+          tags: ${{ env.FD_IMG }}
   
   scan-fluetd-amd64-image:
     name: Trivy + Dockle scan Fluentd amd64 docker image
@@ -88,11 +77,11 @@ jobs:
       - build-fluetd-amd64
     uses: ./.github/workflows/scan-docker-image-action.yaml
     with:
-      source_image: "${{ vars.FD_IMG }}:${{ github.ref_name }}"
+      source_image: "${{ needs.build-fluetd-amd64.outputs.FD_IMG }}"
       source_registry: docker.io
       platforms: '["linux/amd64"]'
     secrets:
-      registry_username: ${{ secrets.REGISTRY_USER }}
+      registry_username: ${{ vars.REGISTRY_USER }}
       registry_password: ${{ secrets.REGISTRY_PASSWORD }}
   
   release-fluentd-amd64-image-to-ghcr:
@@ -102,13 +91,13 @@ jobs:
       - build-fluetd-amd64
       - scan-fluetd-amd64-image
     with:
-      source_image: "${{ vars.FD_IMG }}:${{ github.ref_name }}"
+      source_image: "${{ needs.build-fluetd-amd64.outputs.FD_IMG }}"
       source_registry: docker.io
-      target_image: "${{ vars.FD_GHCR_IMG }}:${{ github.ref_name }}"
+      target_image: "${{ needs.build-fluetd-amd64.outputs.FD_IMAGE_GHCR }}"
       target_registry: ghcr.io
       platforms: '["linux/amd64"]'
     secrets:
-      source_registry_username:  ${{ secrets.REGISTRY_USER }}
+      source_registry_username:  ${{ vars.REGISTRY_USER }}
       source_registry_token: ${{ secrets.REGISTRY_PASSWORD }}
       target_registry_token: ${{ secrets.GITHUB_TOKEN }}
       target_registry_username: ${{ github.actor }}
@@ -117,6 +106,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90 
     name: Build Fluentd arm64 base image
+    outputs:
+      FD_IMAGE_ARCH_BASE: ${{ env.FD_IMAGE_ARCH_BASE }}
+      FD_IMAGE_ARCH_BASE_GHCR: ${{ env.FD_IMAGE_ARCH_BASE_GHCR }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v4
@@ -136,7 +128,7 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.REGISTRY_USER }}
+          username: ${{ vars.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Set up Docker Buildx
@@ -151,7 +143,7 @@ jobs:
           file: ./cmd/fluent-watcher/fluentd/Dockerfile.arm64.base
           push: true
           platforms: linux/arm64
-          tags: ${{ env.ARM64_BASE_DOCKER_REPO }}
+          tags: ${{ env.FD_IMAGE_ARCH_BASE }}
 
   scan-fluetd-arm64-base-image:
     name: Trivy + Dockle scan Fluentd arm64 base docker image
@@ -159,11 +151,11 @@ jobs:
       - build-fluentd-arm64-base
     uses: ./.github/workflows/scan-docker-image-action.yaml
     with:
-      source_image: "${{ vars.FD_IMG }}:${{ github.ref_name }}-arm64-base"
+      source_image: "${{ needs.build-fluentd-arm64-base.outputs.FD_IMAGE_ARCH_BASE }}"
       source_registry: docker.io
       platforms: '["linux/arm64"]'
     secrets:
-      registry_username: ${{ secrets.REGISTRY_USER }}
+      registry_username: ${{ vars.REGISTRY_USER }}
       registry_password: ${{ secrets.REGISTRY_PASSWORD }}
   
   release-fluentd-arm64-base-image-to-ghcr:
@@ -173,13 +165,13 @@ jobs:
       - build-fluentd-arm64-base
       - scan-fluetd-arm64-base-image
     with:
-      source_image: "${{ vars.FD_IMG }}:${{ github.ref_name }}-arm64-base"
+      source_image: "${{ needs.build-fluentd-arm64-base.outputs.FD_IMAGE_ARCH_BASE }}"
       source_registry: docker.io
-      target_image: "${{ vars.FD_GHCR_IMG }}:${{ github.ref_name }}-arm64-base"
+      target_image: "${{ needs.build-fluentd-arm64-base.outputs.FD_IMAGE_ARCH_BASE_GHCR }}"
       target_registry: ghcr.io
       platforms: '["linux/arm64"]'
     secrets:
-      source_registry_username:  ${{ secrets.REGISTRY_USER }}
+      source_registry_username:  ${{ vars.REGISTRY_USER }}
       source_registry_token: ${{ secrets.REGISTRY_PASSWORD }}
       target_registry_token: ${{ secrets.GITHUB_TOKEN }}
       target_registry_username: ${{ github.actor }}
@@ -188,6 +180,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90 
     name: Build Fluentd arm64 image
+    outputs:
+      FD_IMAGE_ARCH: ${{ env.FD_IMAGE_ARCH }}
+      FD_IMAGE_ARCH_GHCR: ${{ env.FD_IMAGE_ARCH_GHCR }}
     needs: 
       - build-fluentd-arm64-base
       - scan-fluetd-arm64-base-image
@@ -210,7 +205,7 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.REGISTRY_USER }}
+          username: ${{ vars.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Set up Docker Buildx
@@ -225,7 +220,7 @@ jobs:
           file: ./cmd/fluent-watcher/fluentd/Dockerfile.arm64.base
           push: true
           platforms: linux/arm64
-          tags: docker.io/${{ vars.FD_IMG }}:${{ github.ref_name }}-arm64
+          tags: ${{ vars.FD_IMG }}:${{ github.ref_name }}-arm64
 
   scan-fluetd-arm64-image:
     name: Scan Fluentd arm64 docker image
@@ -233,11 +228,11 @@ jobs:
       - build-fluentd-arm64
     uses: ./.github/workflows/scan-docker-image-action.yaml
     with:
-      source_image: "${{ vars.FD_IMG }}:${{ github.ref_name }}-arm64"
+      source_image: "${{ needs.build-fluentd-arm64.outputs.FD_IMAGE_ARCH }}"
       source_registry: docker.io
       platforms: '["linux/arm64"]'
     secrets:
-      registry_username: ${{ secrets.REGISTRY_USER }}
+      registry_username: ${{ vars.REGISTRY_USER }}
       registry_password: ${{ secrets.REGISTRY_PASSWORD }}
   
   release-fluentd-arm64-image-to-ghcr:
@@ -247,13 +242,13 @@ jobs:
       - build-fluentd-arm64
       - scan-fluetd-arm64-image
     with:
-      source_image: "${{ vars.FD_IMG }}:${{ github.ref_name }}-arm64"
+      source_image: "${{ needs.build-fluentd-arm64.outputs.FD_IMAGE_ARCH }}"
       source_registry: docker.io
-      target_image: "${{ vars.FD_IMG }}:${{ github.ref_name }}-arm64"
+      target_image: "${{ needs.build-fluentd-arm64.outputs.FD_IMAGE_ARCH_GHCR }}"
       target_registry: ghcr.io
       platforms: '["linux/arm64"]'
     secrets:
-      source_registry_username:  ${{ secrets.REGISTRY_USER }}
+      source_registry_username:  ${{ vars.REGISTRY_USER }}
       source_registry_token: ${{ secrets.REGISTRY_PASSWORD }}
       target_registry_token: ${{ secrets.GITHUB_TOKEN }}
       target_registry_username: ${{ github.actor }}
