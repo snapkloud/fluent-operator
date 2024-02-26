@@ -24,20 +24,18 @@
             required: false
             type: string
             default: '["linux/arm64", "linux/amd64"]'
-          source_registry_username:
-            description: The source registry username
-            type: string
-            required: true
-          target_registry_username:
-            description: The target registry username
-            type: string
-            required: true
         secrets: 
           source_registry_token:
             description: The Github token or similar to authenticate with for the registry.
             required: true
           target_registry_token:
             description: The Github token or similar to authenticate with for the registry.
+            required: true
+          source_registry_username:
+            description: The source registry username
+            required: true
+          target_registry_username:
+            description: The target registry username
             required: true
     
     
@@ -52,14 +50,14 @@
             uses: docker/login-action@v3
             with:
               registry: ${{ inputs.source_registry }}
-              username: ${{ inputs.source_registry_username }}
+              username: ${{ secrets.source_registry_username }}
               password: ${{ secrets.source_registry_token }}
     
           - name: Login to target container registry ${{ inputs.target_registry }}
             uses: docker/login-action@v3
             with:
               registry: ${{ inputs.target_registry }}
-              username: ${{ inputs.target_registry_username }}
+              username: ${{ secrets.target_registry_username }}
               password: ${{ secrets.target_registry_token }}
           
           - name: Pull the source image; verify it exists
@@ -88,5 +86,5 @@
             env:
               SOURCE_IMAGE: ${{ inputs.source_registry }}/${{ inputs.source_image }}
               RELEASE_IMAGE: ${{ inputs.target_registry }}/${{ inputs.target_image }}
-              RELEASE_CREDS: ${{ inputs.target_registry_username }}:${{ secrets.target_registry_token }}
+              RELEASE_CREDS: ${{ secrets.target_registry_username }}:${{ secrets.target_registry_token }}
     
