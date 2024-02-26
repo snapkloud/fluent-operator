@@ -96,11 +96,11 @@ jobs:
       target_image: "${{ needs.build-fluetd-amd64.outputs.FD_IMAGE_GHCR }}"
       target_registry: ghcr.io
       platforms: '["linux/amd64"]'
-    secrets:
       source_registry_username:  ${{ vars.REGISTRY_USER }}
+      target_registry_username: ${{ github.actor }}
+    secrets:
       source_registry_token: ${{ secrets.REGISTRY_PASSWORD }}
       target_registry_token: ${{ secrets.GITHUB_TOKEN }}
-      target_registry_username: ${{ github.actor }}
 
   build-fluentd-arm64-base:
     runs-on: ubuntu-latest
@@ -170,11 +170,11 @@ jobs:
       target_image: "${{ needs.build-fluentd-arm64-base.outputs.FD_IMAGE_ARCH_BASE_GHCR }}"
       target_registry: ghcr.io
       platforms: '["linux/arm64"]'
-    secrets:
       source_registry_username:  ${{ vars.REGISTRY_USER }}
+      target_registry_username: ${{ github.actor }}
+    secrets:
       source_registry_token: ${{ secrets.REGISTRY_PASSWORD }}
       target_registry_token: ${{ secrets.GITHUB_TOKEN }}
-      target_registry_username: ${{ github.actor }}
 
   build-fluentd-arm64:
     runs-on: ubuntu-latest
@@ -220,7 +220,7 @@ jobs:
           file: ./cmd/fluent-watcher/fluentd/Dockerfile.arm64.base
           push: true
           platforms: linux/arm64
-          tags: ${{ vars.FD_IMG }}:${{ github.ref_name }}-arm64
+          tags: ${{ needs.build-fluentd-arm64-base.outputs.FD_IMAGE_ARCH_BASE }}
 
   scan-fluetd-arm64-image:
     name: Scan Fluentd arm64 docker image
@@ -247,8 +247,8 @@ jobs:
       target_image: "${{ needs.build-fluentd-arm64.outputs.FD_IMAGE_ARCH_GHCR }}"
       target_registry: ghcr.io
       platforms: '["linux/arm64"]'
-    secrets:
       source_registry_username:  ${{ vars.REGISTRY_USER }}
+      target_registry_username: ${{ github.actor }}
+    secrets:
       source_registry_token: ${{ secrets.REGISTRY_PASSWORD }}
       target_registry_token: ${{ secrets.GITHUB_TOKEN }}
-      target_registry_username: ${{ github.actor }}

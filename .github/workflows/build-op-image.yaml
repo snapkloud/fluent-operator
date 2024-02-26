@@ -97,10 +97,8 @@ jobs:
       target_image: ${{ needs.operator-build.outputs.FO_IMG_GHCR }}
       target_registry: ghcr.io
       platforms: "['linux/arm64', 'linux/amd64']"
-    secrets:
       source_registry_username:  ${{ vars.REGISTRY_USER }}
+      target_registry_username: ${{ github.actor }}
+    secrets:
       source_registry_token: ${{ secrets.REGISTRY_PASSWORD }}
       target_registry_token: ${{ secrets.GITHUB_TOKEN }}
-      target_registry_username: ${{ github.actor }}
-
-  # docker buildx build --push --platform linux/amd64,linux/arm64 -f cmd/fluent-manager/Dockerfile . -t ${FO_IMG}
