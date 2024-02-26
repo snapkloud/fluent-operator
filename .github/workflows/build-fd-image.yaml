@@ -15,9 +15,9 @@ on:
 
 env:
 
-  FD_IMG: "sarathchandra24/fluentd:${{ github.ref_name }}"                          # kubesphere/fluentd:v2.2.2
-  FD_IMAGE_ARCH: "sarathchandra24/fluentd:${{ github.ref_name }}-arm64"              # kubesphere/fluentd:v2.2.2-arm64
-  FD_IMAGE_ARCH_BASE: "sarathchandra24/fluentd:${{ github.ref_name }}-arm64-base"    # kubesphere/fluentd:v2.2.2-arm64-base
+  FD_IMG: "kubesphere/fluentd:${{ github.ref_name }}"                                 # kubesphere/fluentd:v2.2.2
+  FD_IMAGE_ARCH: "kubesphere/fluentd:${{ github.ref_name }}-arm64"              # kubesphere/fluentd:v2.2.2-arm64
+  FD_IMAGE_ARCH_BASE: "kubesphere/fluentd:${{ github.ref_name }}-arm64-base"    # kubesphere/fluentd:v2.2.2-arm64-base
   
 
   FD_IMAGE_GHCR: "${{ github.repository }}/fluentd:${{ github.ref_name }}"                              # fluent/fluent-operator/fluentd:v2.2.2

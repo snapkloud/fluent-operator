@@ -14,8 +14,8 @@ on:
       - "pkg/filenotify/**"
 
 env:
-  FB_IMG: "sarathchandra24/fluent-bit:${{ github.ref_name }}"                # kubesphere/fluent-bit:v2.2.2
-  FB_IMG_DEBUG: "sarathchandra24/fluent-bit:${{ github.ref_name }}-debug"    # kubesphere/fluent-bit:v2.2.2-debug
+  FB_IMG: "kubesphere/fluent-bit:${{ github.ref_name }}"                # kubesphere/fluent-bit:v2.2.2
+  FB_IMG_DEBUG: "kubesphere/fluent-bit:${{ github.ref_name }}-debug"    # kubesphere/fluent-bit:v2.2.2-debug
 
   FB_IMG_GHCR: "${{ github.repository }}/fluent-bit:${{ github.ref_name }}"              # fluent/fluent-operator/fluent-bit:v2.2.2
   FB_IMG_DEBUG_GHCR: "${{ github.repository }}/fluent-bit:${{ github.ref_name }}-debug"  # fluent/fluent-operator/fluent-bit:v2.2.2-debug
